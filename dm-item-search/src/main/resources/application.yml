@@ -1,0 +1,40 @@
+server:
+  port: 7200
+spring:
+  application:
+    name: dm-item-consumer
+  rabbitmq:
+    host: 192.168.9.151
+    port: 5672
+    username: guest
+    password: guest
+  redis:
+    database: 0
+    host: 192.168.9.151
+    port: 6379
+    user: root
+    password: 123456
+    timeout: 3000
+  sleuth:
+    sampler:
+      percentage: 1.0
+eureka:
+  client:
+    service-url:
+      defaultZone: http://root:123456@192.168.9.151:9006/eureka/
+#      defaultZone: http://root:123456@discovery:9000/eureka/
+#      defaultZone: http://root:123456@localhost:9000/eureka/
+# dm-goods-provider.ribbon.NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RoundRobinRule
+hystrix:
+  command:
+    defalut:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 10000
+logging:
+  level: debug
+
+feign:
+  hystrix:
+    enabled: true #禁用容错处理
