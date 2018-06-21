@@ -2,23 +2,26 @@ package cn.dm.service.impl;
 import cn.dm.client.RestDmCinemaClient;
 import cn.dm.client.RestDmImageClient;
 import cn.dm.client.RestDmItemClient;
-import cn.dm.common.Constants;
-import cn.dm.common.EmptyUtils;
-import cn.dm.common.EsUtils;
-import cn.dm.common.Page;
-import cn.dm.document.IESDocument;
-import cn.dm.es.ItemEsQuery;
-import cn.dm.es.ItemSearchVo;
+import cn.dm.common.*;
+import cn.dm.es.document.IESDocument;
+import cn.dm.es.common.EsUtils;
+import cn.dm.es.query.AbstractEsQuery;
+import cn.dm.item.ItemEsQuery;
+import cn.dm.item.ItemSearchVo;
+import cn.dm.item.ItemSearchVoSetting;
 import cn.dm.pojo.DmCinema;
 import cn.dm.pojo.DmImage;
 import cn.dm.pojo.DmItem;
-import cn.dm.query.AbstractEsQuery;
 import cn.dm.query.ItemQuery;
 import cn.dm.service.ItemSearchService;
+import org.apache.log4j.Logger;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.*;
 
 @Component
@@ -30,23 +33,54 @@ public class ItemSearchServiceImpl implements ItemSearchService {
     private RestDmImageClient restDmImageClient;
     @Resource
     private RestDmCinemaClient restDmCinemaClient;
+    @Resource
+    private EsUtils esUtils;
 
-    //最后更新时间
-    private Date lastUpdatedTime=null;
+    @Value("${lastUpdatedTimeFile}")
+    private String lastUpdatedTimeFile;
+
+    private Logger logger=Logger.getLogger(ItemSearchServiceImpl.class);
 
     @Override
     public Page<ItemSearchVo> queryItemList(ItemQuery itemQuery) throws Exception {
-        EsUtils esUtils=new EsUtils();
-        AbstractEsQuery abstractEsQuery=new ItemEsQuery();
-        return esUtils.queryPage(abstractEsQuery);
+        ItemEsQuery itemEsQuery=new ItemEsQuery();
+        if(EmptyUtils.isNotEmpty(itemQuery.getItemTypeId1())){
+            itemEsQuery.setMatchParams("itemTypeId1",itemQuery.getItemTypeId1());
+        }
+        if(EmptyUtils.isNotEmpty(itemQuery.getItemTypeId2())){
+            itemEsQuery.setMatchParams("itemTypeId2",itemQuery.getItemTypeId2());
+        }
+        if(EmptyUtils.isNotEmpty(itemQuery.getAreaId())){
+            itemEsQuery.setMatchParams("areaId",itemQuery.getAreaId());
+        }
+        if(EmptyUtils.isNotEmpty(itemQuery.getKeyword())){
+            itemEsQuery.setLikeMatchParams("itemName",itemQuery.getKeyword());
+        }
+        if(EmptyUtils.isNotEmpty(itemQuery.getStartTime())){
+            itemEsQuery.setMatchParams("startTime",itemQuery.getStartTime());
+        }
+        if(EmptyUtils.isNotEmpty(itemQuery.getEndTime())){
+            itemEsQuery.setMatchParams("endTime",itemQuery.getEndTime());
+        }
+        if(EmptyUtils.isNotEmpty(itemQuery.getSort())){
+            itemEsQuery.setDesc(itemQuery.getSort());
+        }
+        itemEsQuery.setPageNo(itemQuery.getPageNo());
+        itemEsQuery.setPageSize(itemQuery.getPageSize());
+        return esUtils.queryPage(itemEsQuery);
     }
 
     /***
      * 导入item数据
      * @throws Exception
      */
-    public void importItemList(Map<String,Object> params)throws Exception{
-        EsUtils esUtils=new EsUtils();
+    @Scheduled(cron = "0 0/1 * * * ?")
+    public void importItemList()throws Exception{
+        Map<String,Object> params=new HashMap<String,Object>();
+        String lastUpdatedTime= getLastUpdatedTime();
+        if(EmptyUtils.isNotEmpty(lastUpdatedTime)){
+            params.put("lastUpdatedTime",lastUpdatedTime);
+        }
         List<DmItem> dmItemList=restDmItemClient.getDmItemListByMap(params);
         List<IESDocument> itemSearchVoList=new ArrayList<IESDocument>();
         if(EmptyUtils.isNotEmpty(dmItemList)){
@@ -56,14 +90,27 @@ public class ItemSearchServiceImpl implements ItemSearchService {
                 //更新图片、区域名称、地址
                 List<DmImage> dmImages=restDmImageClient.queryDmImageList(dmItem.getId(), Constants.Image.ImageType.normal,Constants.Image.ImageCategory.item);
                 itemSearchVo.setImgUrl(EmptyUtils.isEmpty(dmImages)?null:dmImages.get(0).getImgUrl());
+                itemSearchVo.setItemTypeId1(dmItem.getItemType1Id());
+                itemSearchVo.setItemTypeId2(dmItem.getItemType2Id());
+                itemSearchVo.setStartTime(DateUtil.format(dmItem.getStartTime()));
+                itemSearchVo.setEndTime(DateUtil.format(dmItem.getEndTime()));
+
                 DmCinema dmCinema=restDmCinemaClient.getDmCinemaById(dmItem.getCinemaId());
+                itemSearchVo.setAreaId(dmCinema.getAreaId());
                 itemSearchVo.setAddress(dmCinema.getAddress());
                 itemSearchVo.setAreaName(dmCinema.getAreaName());
                 itemSearchVoList.add(itemSearchVo);
             }
         }
+        //更新最后更新时间
+        logger.info("<<<<<<<<"+DateUtil.format(new Date())+"更新了"+itemSearchVoList.size()+"数据>>>>>>>>>");
+        lastUpdatedTime=DateUtil.format(new Date());
+        FileUtils.writeInFile(lastUpdatedTimeFile,lastUpdatedTime);
         esUtils.addBatchESModule(itemSearchVoList);
     }
 
-
+    public String getLastUpdatedTime() throws IOException {
+        FileUtils.createIfNotExist(lastUpdatedTimeFile);
+        return FileUtils.readFileByLine(lastUpdatedTimeFile);
+    }
 }

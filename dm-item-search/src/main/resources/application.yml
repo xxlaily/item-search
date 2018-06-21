@@ -29,9 +29,6 @@ eureka:
   client:
     service-url:
       defaultZone: http://root:123456@192.168.9.151:9003/eureka/
-#      defaultZone: http://root:123456@discovery:9000/eureka/
-#      defaultZone: http://root:123456@localhost:9000/eureka/
-# dm-goods-provider.ribbon.NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RoundRobinRule
 hystrix:
   command:
     defalut:
@@ -48,7 +45,12 @@ logging:
 feign:
   hystrix:
     enabled: false #禁用容错处理
+
 elasticsearch:
   ip: 192.168.9.151
   port: 8300
   clusterName: elasticsearch-application
+
+lastUpdatedTimeFile:
+   /usr/local/dm_last_updated_time
+#   d:/dm_last_updated_time
