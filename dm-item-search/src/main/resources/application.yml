@@ -1,8 +1,10 @@
 server:
-  port: 7200
+  port: 7201
+  tomcat:
+    uri-encoding: UTF-8
 spring:
   application:
-    name: dm-item-consumer
+    name: dm-item-search
   rabbitmq:
     host: 192.168.9.151
     port: 5672
@@ -18,10 +20,15 @@ spring:
   sleuth:
     sampler:
       percentage: 1.0
+  http:
+    encoding:
+      force: true
+      charset: UTF-8
+      enabled: true
 eureka:
   client:
     service-url:
-      defaultZone: http://root:123456@192.168.9.151:9006/eureka/
+      defaultZone: http://root:123456@192.168.9.151:9003/eureka/
 #      defaultZone: http://root:123456@discovery:9000/eureka/
 #      defaultZone: http://root:123456@localhost:9000/eureka/
 # dm-goods-provider.ribbon.NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RoundRobinRule
@@ -31,10 +38,17 @@ hystrix:
       execution:
         isolation:
           thread:
-            timeoutInMilliseconds: 10000
+            timeoutInMilliseconds: 200000
+ribbon:
+  ReadTimeout: 200000
+  ConnectTimeout: 200000
 logging:
   level: debug
 
 feign:
   hystrix:
-    enabled: true #禁用容错处理
+    enabled: false #禁用容错处理
+elasticsearch:
+  ip: 192.168.9.151
+  port: 8300
+  clusterName: elasticsearch-application

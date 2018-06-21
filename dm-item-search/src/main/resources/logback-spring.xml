@@ -27,7 +27,7 @@
             </fileNamePattern>
         </rollingPolicy>
     </appender>
-    <root level="debug">
+    <root level="info">
         <appender-ref ref="consoleLog"></appender-ref>
         <appender-ref ref="fileLog"></appender-ref>
     </root>
