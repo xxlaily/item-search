@@ -17,6 +17,9 @@ public class ItemSearchVoSetting extends AbatractESDocumentSetting {
         this.addESProperties("areaId",ESType.es_text, null,true);
         this.addESProperties("startTime",ESType.es_text, ESAnyanalyzerType.whitespace,true);
         this.addESProperties("endTime",ESType.es_text, ESAnyanalyzerType.whitespace,true);
+        this.addESProperties("createdTimeLong",ESType.es_integer, ESAnyanalyzerType.whitespace,true);
+        this.addESProperties("endTimeLong",ESType.es_integer, ESAnyanalyzerType.whitespace,true);
+        this.addESProperties("endTimeLong",ESType.es_integer, ESAnyanalyzerType.whitespace,true);
     }
 
     @Override

@@ -57,13 +57,22 @@ public class ItemSearchServiceImpl implements ItemSearchService {
             itemEsQuery.setLikeMatchParams("itemName",itemQuery.getKeyword());
         }
         if(EmptyUtils.isNotEmpty(itemQuery.getStartTime())){
-            itemEsQuery.setMatchParams("startTime",itemQuery.getStartTime());
+            Long startTimeLong=DateUtil.parse(itemQuery.getStartTime(),"yyyy-MM-dd").getTime();
+            itemEsQuery.setGteParams("createdTimeLong",startTimeLong);
         }
         if(EmptyUtils.isNotEmpty(itemQuery.getEndTime())){
-            itemEsQuery.setMatchParams("endTime",itemQuery.getEndTime());
+            Long endTimeLong=DateUtil.parse(itemQuery.getEndTime(),"yyyy-MM-dd").getTime();
+            itemEsQuery.setLteParams("createdTimeLong",endTimeLong);
         }
+        //指定排序的字段("recommend"："推荐","recentShow":"最近演出","recentSell"：最近上架)
         if(EmptyUtils.isNotEmpty(itemQuery.getSort())){
-            itemEsQuery.setDesc(itemQuery.getSort());
+            if(itemQuery.getSort().equals("recommend")){
+                itemEsQuery.setDesc("commentCount");
+            }else if(itemQuery.getSort().equals("recentShow")){
+                itemEsQuery.setDesc("createdTimeLong");
+            }else if(itemQuery.getSort().equals("recentSell")){
+                itemEsQuery.setDesc("startTimeLong");
+            }
         }
         itemEsQuery.setPageNo(itemQuery.getPageNo());
         itemEsQuery.setPageSize(itemQuery.getPageSize());
@@ -99,6 +108,11 @@ public class ItemSearchServiceImpl implements ItemSearchService {
                 itemSearchVo.setAreaId(dmCinema.getAreaId());
                 itemSearchVo.setAddress(dmCinema.getAddress());
                 itemSearchVo.setAreaName(dmCinema.getAreaName());
+                itemSearchVo.setCreatedTimeLong(dmItem.getCreatedTime().getTime());
+                itemSearchVo.setCreatedTime(DateUtil.format(dmItem.getCreatedTime()));
+                itemSearchVo.setStartTimeLong(dmItem.getStartTime().getTime());
+                itemSearchVo.setEndTimeLong(dmItem.getEndTime().getTime());
+                itemSearchVo.setCommentCount(dmItem.getCommentCount());
                 itemSearchVoList.add(itemSearchVo);
             }
         }
@@ -106,7 +120,9 @@ public class ItemSearchServiceImpl implements ItemSearchService {
         logger.info("<<<<<<<<"+DateUtil.format(new Date())+"更新了"+itemSearchVoList.size()+"数据>>>>>>>>>");
         lastUpdatedTime=DateUtil.format(new Date());
         FileUtils.writeInFile(lastUpdatedTimeFile,lastUpdatedTime);
-        esUtils.addBatchESModule(itemSearchVoList);
+        if(EmptyUtils.isNotEmpty(itemSearchVoList)){
+            esUtils.addBatchESModule(itemSearchVoList);
+        }
     }
 
     public String getLastUpdatedTime() throws IOException {

@@ -23,6 +23,19 @@ public class ItemSearchVo implements IESDocument{
     private Long itemTypeId1;
     private Long itemTypeId2;
     private Long areaId;
+    private Integer commentCount;
+    private String createdTime;
+    private Long  createdTimeLong;
+    private Long startTimeLong;
+    private Long endTimeLong;
+
+    public Integer getCommentCount() {
+        return commentCount;
+    }
+
+    public void setCommentCount(Integer commentCount) {
+        this.commentCount = commentCount;
+    }
 
     public Long getId() {
         return id;
@@ -145,6 +158,38 @@ public class ItemSearchVo implements IESDocument{
         this.areaId = areaId;
     }
 
+    public String getCreatedTime() {
+        return createdTime;
+    }
+
+    public void setCreatedTime(String createdTime) {
+        this.createdTime = createdTime;
+    }
+
+    public Long getCreatedTimeLong() {
+        return createdTimeLong;
+    }
+
+    public void setCreatedTimeLong(Long createdTimeLong) {
+        this.createdTimeLong = createdTimeLong;
+    }
+
+    public Long getStartTimeLong() {
+        return startTimeLong;
+    }
+
+    public void setStartTimeLong(Long startTimeLong) {
+        this.startTimeLong = startTimeLong;
+    }
+
+    public Long getEndTimeLong() {
+        return endTimeLong;
+    }
+
+    public void setEndTimeLong(Long endTimeLong) {
+        this.endTimeLong = endTimeLong;
+    }
+
     @JsonIgnore
     public String getEsId() {
         return id.toString();
@@ -154,6 +199,4 @@ public class ItemSearchVo implements IESDocument{
     public AbatractESDocumentSetting getSetting() {
         return new ItemSearchVoSetting();
     }
-
-
 }

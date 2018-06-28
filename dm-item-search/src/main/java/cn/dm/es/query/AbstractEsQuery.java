@@ -25,6 +25,10 @@ public abstract class AbstractEsQuery implements Serializable{
     //模糊匹配
     private Map<String,Object> likeMatchParams;
 
+    private Map<String,Object> gteParams;
+
+    private Map<String,Object> lteParams;
+
     public String getKeyword() {
         return keyword;
     }
@@ -81,6 +85,28 @@ public abstract class AbstractEsQuery implements Serializable{
         likeMatchParams.put(key,value);
     }
 
+    public Map<String, Object> getGteParams() {
+        return gteParams;
+    }
+
+    public void setGteParams(String key,Object value) {
+        if(EmptyUtils.isEmpty(gteParams)){
+            gteParams=new HashMap<String, Object>();
+        }
+        gteParams.put(key,value);
+    }
+
+    public Map<String, Object> getLteParams() {
+        return lteParams;
+    }
+
+    public void setLteParams(String key,Object value) {
+        if(EmptyUtils.isEmpty(lteParams)){
+            lteParams=new HashMap<String, Object>();
+        }
+        lteParams.put(key,value);
+    }
+
     public Map<String, Object> getMatchParams() {
         return matchParams;
     }
@@ -94,4 +120,6 @@ public abstract class AbstractEsQuery implements Serializable{
     public abstract String getTypeName();
 
     public abstract Class getModuleClass();
+
+
 }

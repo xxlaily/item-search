@@ -5,6 +5,7 @@ import cn.dm.common.Page;
 import cn.dm.es.document.IESDocument;
 import cn.dm.es.document.AbatractESDocumentSetting;
 import cn.dm.es.query.AbstractEsQuery;
+import cn.dm.query.ItemQuery;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -21,9 +22,10 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -146,6 +148,9 @@ public class EsUtils {
     public Page queryPage(AbstractEsQuery dmEsQuery) throws Exception {
         Page page=null;
         List result=null;
+        List<MatchQueryBuilder> matchQueryBuilders=new ArrayList<MatchQueryBuilder>();
+        List<TermQueryBuilder> termQueryBuilders=new ArrayList<TermQueryBuilder>();
+        List<RangeQueryBuilder> rangeQueryBuilders=new ArrayList<RangeQueryBuilder>();
         try {
             if(EmptyUtils.isEmpty(dmEsQuery)){
                 logger.info(">>>>>>queryPage未设置查询条件>>>>>>>>>");
@@ -179,18 +184,57 @@ public class EsUtils {
             //精准匹配
             if(EmptyUtils.isNotEmpty(dmEsQuery.getMatchParams())){
                 for (Map.Entry<String, Object> entry : dmEsQuery.getMatchParams().entrySet()) {
-                   searchRequestBuilder.setQuery(QueryBuilders.matchQuery(entry.getKey(),entry.getValue()));
+                    matchQueryBuilders.add(QueryBuilders.matchQuery(entry.getKey(), entry.getValue()));
                 }
             }
             //模糊查询
             if(EmptyUtils.isNotEmpty(dmEsQuery.getLikeMatchParams())){
                 for (Map.Entry<String, Object> entry : dmEsQuery.getLikeMatchParams().entrySet()) {
-                    searchRequestBuilder.setQuery(QueryBuilders.termQuery(entry.getKey(),entry.getValue()));
+                    termQueryBuilders.add(QueryBuilders.termQuery(entry.getKey(),entry.getValue()));
                 }
             }
+            //范围匹配 大于
+            if(EmptyUtils.isNotEmpty(dmEsQuery.getLteParams())){
+                for (Map.Entry<String, Object> entry : dmEsQuery.getLteParams().entrySet()) {
+                    rangeQueryBuilders.add(QueryBuilders.rangeQuery(entry.getKey()).lte(entry.getValue()));
+                }
+            }
+
+            //范围匹配 小于
+            if(EmptyUtils.isNotEmpty(dmEsQuery.getGteParams())){
+                for (Map.Entry<String, Object> entry : dmEsQuery.getGteParams().entrySet()) {
+                    rangeQueryBuilders.add(QueryBuilders.rangeQuery(entry.getKey()).lte(entry.getValue()));
+                }
+            }
+            BoolQueryBuilder boolQueryBuilder=null;
+
+            for (MatchQueryBuilder matchQueryBuilder:matchQueryBuilders){
+                if(EmptyUtils.isEmpty(boolQueryBuilder)){
+                    boolQueryBuilder=QueryBuilders.boolQuery().must(matchQueryBuilder);
+                }else{
+                    boolQueryBuilder=boolQueryBuilder.must(matchQueryBuilder);
+                }
+            }
+
+            for (TermQueryBuilder termQueryBuilder:termQueryBuilders){
+                if(EmptyUtils.isEmpty(boolQueryBuilder)){
+                    boolQueryBuilder=QueryBuilders.boolQuery().must(termQueryBuilder);
+                }else{
+                    boolQueryBuilder=boolQueryBuilder.must(termQueryBuilder);
+                }
+            }
+            for (RangeQueryBuilder rangeQueryBuilder:rangeQueryBuilders){
+                if(EmptyUtils.isEmpty(boolQueryBuilder)){
+                    boolQueryBuilder=QueryBuilders.boolQuery().must(rangeQueryBuilder);
+                }else{
+                    boolQueryBuilder=boolQueryBuilder.must(rangeQueryBuilder);
+                }
+            }
+            searchRequestBuilder.setQuery(boolQueryBuilder);
+            logger.info("elasticSearch sql :"+searchRequestBuilder.toString());
             SearchResponse response = searchRequestBuilder.execute().actionGet();
             SearchHits searchHits = response.getHits();
-            System.out.println("总数："+searchHits.getTotalHits());
+            logger.info(" elasticSearch search total ："+searchHits.getTotalHits());
             page=new Page(dmEsQuery.getPageNo(),dmEsQuery.getPageSize(),new Long(searchHits.getTotalHits()).intValue());
             SearchHit[] hits = searchHits.getHits();
             if(EmptyUtils.isNotEmpty(hits)){
@@ -211,6 +255,9 @@ public class EsUtils {
 
     public List queryList(AbstractEsQuery dmEsQuery) throws Exception {
         List result=null;
+        List<MatchQueryBuilder> matchQueryBuilders=new ArrayList<MatchQueryBuilder>();
+        List<TermQueryBuilder> termQueryBuilders=new ArrayList<TermQueryBuilder>();
+        List<RangeQueryBuilder> rangeQueryBuilders=new ArrayList<RangeQueryBuilder>();
         try {
             if(EmptyUtils.isEmpty(dmEsQuery)){
                 logger.info(">>>>>>queryList未设置查询条件>>>>>>>>>");
@@ -229,27 +276,70 @@ public class EsUtils {
             if(EmptyUtils.isNotEmpty(dmEsQuery.getAsc())){
                 searchRequestBuilder.addSort(dmEsQuery.getAsc(), SortOrder.ASC);
             }
-            //判断分页
-            if(EmptyUtils.isNotEmpty(dmEsQuery.getPageSize()) && EmptyUtils.isNotEmpty(dmEsQuery.getPageNo())){
-                Integer beginPos = (dmEsQuery.getPageNo() - 1) * dmEsQuery.getPageSize();
-                searchRequestBuilder.setFrom(beginPos);
-                searchRequestBuilder.setSize(dmEsQuery.getPageSize());
+
+            if(EmptyUtils.isEmpty(dmEsQuery.getPageSize())){
+                dmEsQuery.setPageSize(Constants.DEFAULT_PAGE_SIZE);
             }
+
+            if(EmptyUtils.isEmpty(dmEsQuery.getPageNo())){
+                dmEsQuery.setPageNo(Constants.DEFAULT_PAGE_NO);
+            }
+            //判断分页
+            Integer beginPos = (dmEsQuery.getPageNo() - 1) * dmEsQuery.getPageSize();
+            searchRequestBuilder.setFrom(beginPos);
+            searchRequestBuilder.setSize(dmEsQuery.getPageSize());
             //精准匹配
             if(EmptyUtils.isNotEmpty(dmEsQuery.getMatchParams())){
                 for (Map.Entry<String, Object> entry : dmEsQuery.getMatchParams().entrySet()) {
-                    searchRequestBuilder.setQuery(QueryBuilders.matchQuery(entry.getKey(),entry.getValue()));
+                    matchQueryBuilders.add(QueryBuilders.matchQuery(entry.getKey(), entry.getValue()));
                 }
             }
             //模糊查询
             if(EmptyUtils.isNotEmpty(dmEsQuery.getLikeMatchParams())){
                 for (Map.Entry<String, Object> entry : dmEsQuery.getLikeMatchParams().entrySet()) {
-                    searchRequestBuilder.setQuery(QueryBuilders.termQuery(entry.getKey(),entry.getValue()));
+                    termQueryBuilders.add(QueryBuilders.termQuery(entry.getKey(),entry.getValue()));
                 }
             }
+            //范围匹配 大于
+            if(EmptyUtils.isNotEmpty(dmEsQuery.getLteParams())){
+                for (Map.Entry<String, Object> entry : dmEsQuery.getLteParams().entrySet()) {
+                    rangeQueryBuilders.add(QueryBuilders.rangeQuery(entry.getKey()).lte(entry.getValue()));
+                }
+            }
+
+            //范围匹配 小于
+            if(EmptyUtils.isNotEmpty(dmEsQuery.getGteParams())){
+                for (Map.Entry<String, Object> entry : dmEsQuery.getGteParams().entrySet()) {
+                    rangeQueryBuilders.add(QueryBuilders.rangeQuery(entry.getKey()).lte(entry.getValue()));
+                }
+            }
+            BoolQueryBuilder boolQueryBuilder=null;
+            for (MatchQueryBuilder matchQueryBuilder:matchQueryBuilders){
+                if(EmptyUtils.isEmpty(boolQueryBuilder)){
+                    boolQueryBuilder=QueryBuilders.boolQuery().must(matchQueryBuilder);
+                }else{
+                    boolQueryBuilder=boolQueryBuilder.must(matchQueryBuilder);
+                }
+            }
+            for (TermQueryBuilder termQueryBuilder:termQueryBuilders){
+                if(EmptyUtils.isEmpty(boolQueryBuilder)){
+                    boolQueryBuilder=QueryBuilders.boolQuery().must(termQueryBuilder);
+                }else{
+                    boolQueryBuilder=boolQueryBuilder.must(termQueryBuilder);
+                }
+            }
+            for (RangeQueryBuilder rangeQueryBuilder:rangeQueryBuilders){
+                if(EmptyUtils.isEmpty(boolQueryBuilder)){
+                    boolQueryBuilder=QueryBuilders.boolQuery().must(rangeQueryBuilder);
+                }else{
+                    boolQueryBuilder=boolQueryBuilder.must(rangeQueryBuilder);
+                }
+            }
+            searchRequestBuilder.setQuery(boolQueryBuilder);
+            logger.info("elasticSearch sql :"+searchRequestBuilder.toString());
             SearchResponse response = searchRequestBuilder.execute().actionGet();
             SearchHits searchHits = response.getHits();
-            System.out.println("总数："+searchHits.getTotalHits());
+            logger.info(" elasticSearch search total ："+searchHits.getTotalHits());
             SearchHit[] hits = searchHits.getHits();
             if(EmptyUtils.isNotEmpty(hits)){
                 result=new ArrayList();
