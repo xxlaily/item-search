@@ -5,7 +5,6 @@ import cn.dm.common.Page;
 import cn.dm.es.document.IESDocument;
 import cn.dm.es.document.AbatractESDocumentSetting;
 import cn.dm.es.query.AbstractEsQuery;
-import cn.dm.query.ItemQuery;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;

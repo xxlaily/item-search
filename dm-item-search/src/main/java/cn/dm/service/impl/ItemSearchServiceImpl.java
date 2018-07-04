@@ -5,21 +5,18 @@ import cn.dm.client.RestDmItemClient;
 import cn.dm.common.*;
 import cn.dm.es.document.IESDocument;
 import cn.dm.es.common.EsUtils;
-import cn.dm.es.query.AbstractEsQuery;
+import cn.dm.es.query.ItemQuery;
 import cn.dm.item.ItemEsQuery;
 import cn.dm.item.ItemSearchVo;
-import cn.dm.item.ItemSearchVoSetting;
 import cn.dm.pojo.DmCinema;
 import cn.dm.pojo.DmImage;
 import cn.dm.pojo.DmItem;
-import cn.dm.query.ItemQuery;
 import cn.dm.service.ItemSearchService;
 import org.apache.log4j.Logger;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
@@ -44,10 +41,10 @@ public class ItemSearchServiceImpl implements ItemSearchService {
     @Override
     public Page<ItemSearchVo> queryItemList(ItemQuery itemQuery) throws Exception {
         ItemEsQuery itemEsQuery=new ItemEsQuery();
-        if(EmptyUtils.isNotEmpty(itemQuery.getItemTypeId1())){
+        if(EmptyUtils.isNotEmpty(itemQuery.getItemTypeId1()) && itemQuery.getItemTypeId1()!=0){
             itemEsQuery.setMatchParams("itemTypeId1",itemQuery.getItemTypeId1());
         }
-        if(EmptyUtils.isNotEmpty(itemQuery.getItemTypeId2())){
+        if(EmptyUtils.isNotEmpty(itemQuery.getItemTypeId2()) && itemQuery.getItemTypeId2()!=0){
             itemEsQuery.setMatchParams("itemTypeId2",itemQuery.getItemTypeId2());
         }
         if(EmptyUtils.isNotEmpty(itemQuery.getAreaId())){
@@ -74,7 +71,7 @@ public class ItemSearchServiceImpl implements ItemSearchService {
                 itemEsQuery.setDesc("startTimeLong");
             }
         }
-        itemEsQuery.setPageNo(itemQuery.getPageNo());
+        itemEsQuery.setPageNo(itemQuery.getCurrentPage());
         itemEsQuery.setPageSize(itemQuery.getPageSize());
         return esUtils.queryPage(itemEsQuery);
     }

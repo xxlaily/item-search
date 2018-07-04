@@ -1,10 +1,7 @@
 package cn.dm.service;
-
 import cn.dm.common.Page;
+import cn.dm.es.query.ItemQuery;
 import cn.dm.item.ItemSearchVo;
-import cn.dm.query.ItemQuery;
-import java.util.Map;
-
 /***
  * 搜索的service类
  */
