@@ -47,7 +47,7 @@ public class ItemSearchServiceImpl implements ItemSearchService {
         if(EmptyUtils.isNotEmpty(itemQuery.getItemTypeId2()) && itemQuery.getItemTypeId2()!=0){
             itemEsQuery.setMatchParams("itemTypeId2",itemQuery.getItemTypeId2());
         }
-        if(EmptyUtils.isNotEmpty(itemQuery.getAreaId()) && itemQuery.getItemTypeId2()!=0 ){
+        if(EmptyUtils.isNotEmpty(itemQuery.getAreaId()) && itemQuery.getAreaId()!=0 ){
             itemEsQuery.setMatchParams("areaId",itemQuery.getAreaId());
         }
         if(EmptyUtils.isNotEmpty(itemQuery.getKeyword())){
