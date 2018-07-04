@@ -47,7 +47,7 @@ public class ItemSearchServiceImpl implements ItemSearchService {
         if(EmptyUtils.isNotEmpty(itemQuery.getItemTypeId2()) && itemQuery.getItemTypeId2()!=0){
             itemEsQuery.setMatchParams("itemTypeId2",itemQuery.getItemTypeId2());
         }
-        if(EmptyUtils.isNotEmpty(itemQuery.getAreaId())){
+        if(EmptyUtils.isNotEmpty(itemQuery.getAreaId()) && itemQuery.getItemTypeId2()!=0 ){
             itemEsQuery.setMatchParams("areaId",itemQuery.getAreaId());
         }
         if(EmptyUtils.isNotEmpty(itemQuery.getKeyword())){
@@ -55,11 +55,11 @@ public class ItemSearchServiceImpl implements ItemSearchService {
         }
         if(EmptyUtils.isNotEmpty(itemQuery.getStartTime())){
             Long startTimeLong=DateUtil.parse(itemQuery.getStartTime(),"yyyy-MM-dd").getTime();
-            itemEsQuery.setGteParams("createdTimeLong",startTimeLong);
+            itemEsQuery.setGteParams("startTimeLong",startTimeLong);
         }
         if(EmptyUtils.isNotEmpty(itemQuery.getEndTime())){
             Long endTimeLong=DateUtil.parse(itemQuery.getEndTime(),"yyyy-MM-dd").getTime();
-            itemEsQuery.setLteParams("createdTimeLong",endTimeLong);
+            itemEsQuery.setLteParams("startTimeLong",endTimeLong);
         }
         //指定排序的字段("recommend"："推荐","recentShow":"最近演出","recentSell"：最近上架)
         if(EmptyUtils.isNotEmpty(itemQuery.getSort())){

@@ -202,7 +202,7 @@ public class EsUtils {
             //范围匹配 小于
             if(EmptyUtils.isNotEmpty(dmEsQuery.getGteParams())){
                 for (Map.Entry<String, Object> entry : dmEsQuery.getGteParams().entrySet()) {
-                    rangeQueryBuilders.add(QueryBuilders.rangeQuery(entry.getKey()).lte(entry.getValue()));
+                    rangeQueryBuilders.add(QueryBuilders.rangeQuery(entry.getKey()).gte(entry.getValue()));
                 }
             }
             BoolQueryBuilder boolQueryBuilder=null;
