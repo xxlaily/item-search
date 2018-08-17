@@ -147,6 +147,7 @@ public class EsUtils {
     public Page queryPage(AbstractEsQuery dmEsQuery) throws Exception {
         Page page=null;
         List result=null;
+
         List<MatchQueryBuilder> matchQueryBuilders=new ArrayList<MatchQueryBuilder>();
         List<TermQueryBuilder> termQueryBuilders=new ArrayList<TermQueryBuilder>();
         List<RangeQueryBuilder> rangeQueryBuilders=new ArrayList<RangeQueryBuilder>();
@@ -180,13 +181,13 @@ public class EsUtils {
             Integer beginPos = (dmEsQuery.getPageNo() - 1) * dmEsQuery.getPageSize();
             searchRequestBuilder.setFrom(beginPos);
             searchRequestBuilder.setSize(dmEsQuery.getPageSize());
-            //精准匹配
+            //模糊匹配
             if(EmptyUtils.isNotEmpty(dmEsQuery.getMatchParams())){
                 for (Map.Entry<String, Object> entry : dmEsQuery.getMatchParams().entrySet()) {
                     matchQueryBuilders.add(QueryBuilders.matchQuery(entry.getKey(), entry.getValue()));
                 }
             }
-            //模糊查询
+            //精准查询
             if(EmptyUtils.isNotEmpty(dmEsQuery.getLikeMatchParams())){
                 for (Map.Entry<String, Object> entry : dmEsQuery.getLikeMatchParams().entrySet()) {
                     termQueryBuilders.add(QueryBuilders.termQuery(entry.getKey(),entry.getValue()));
@@ -328,6 +329,7 @@ public class EsUtils {
                 }
             }
             for (RangeQueryBuilder rangeQueryBuilder:rangeQueryBuilders){
+
                 if(EmptyUtils.isEmpty(boolQueryBuilder)){
                     boolQueryBuilder=QueryBuilders.boolQuery().must(rangeQueryBuilder);
                 }else{

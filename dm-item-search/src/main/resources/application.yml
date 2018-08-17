@@ -53,4 +53,5 @@ elasticsearch:
 
 lastUpdatedTimeFile:
    /usr/local/dm_last_updated_time
-#   d:/dm_last_updated_time
+
+moduleName: dm-item
