@@ -6,13 +6,13 @@ spring:
   application:
     name: dm-item-search
   rabbitmq:
-    host: 192.168.9.151
+    host: 192.168.92.131
     port: 5672
     username: guest
     password: guest
   redis:
     database: 0
-    host: 192.168.9.151
+    host: 192.168.92.131
     port: 6379
     user: root
     password: 123456
@@ -28,7 +28,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://root:123456@192.168.9.151:7776/eureka/
+      defaultZone: http://root:123456@192.168.92.131:7776/eureka/
 hystrix:
   command:
     defalut:
@@ -47,7 +47,7 @@ feign:
     enabled: false #禁用容错处理
 
 elasticsearch:
-  ip: 192.168.9.151
+  ip: 192.168.92.131
   port: 8300
   clusterName: elasticsearch-application
 
